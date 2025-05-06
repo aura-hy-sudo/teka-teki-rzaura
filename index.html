@@ -1,0 +1,445 @@
+        <!DOCTYPE html><html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Teka-Teki by aura </title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background: linear-gradient(to right, #2c3e50, #3498db);
+                    color: #fff;
+                }
+                .container {
+                    display: none;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    padding: 20px;
+                    text-align: center;
+                }
+                #home-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                }
+                button {
+                    margin: 10px;
+                    padding: 10px 20px;
+                    font-size: 18px;
+                    background-color: #2980b9;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+                button:hover {
+                    background-color: #1abc9c;
+                }
+                input[type="text"] {
+                    padding: 8px;
+                    font-size: 16px;
+                    border-radius: 5px;
+                    border: none;
+                    margin: 10px;
+                }
+                #question {
+                    font-size: 24px;
+                    margin-bottom: 20px;
+                }
+                .actions {
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+        <div id="home-container">
+            <h1>Selamat Datang di Permainan Teka-Teki</h1>
+            <button onclick="startGame()">Mulai Permainan</button>
+            <button onclick="viewLeaderboard()">Leaderboard</button>
+            <button onclick="startMultiplayer()">Multiplayer</button>
+        </div>
+        <div id="game-container" class="container">
+            <div id="question"></div>
+            <input type="text" id="answer" placeholder="Jawaban Anda">
+            <div class="actions">
+                <button onclick="checkAnswer()">Jawab</button>
+                <button onclick="showClue()">Clue</button>
+                <button onclick="skipQuestion()">Lewati</button>
+                <button onclick="endGame()">Menyerah</button>
+            </div>
+            <div id="result"></div>
+            <div id="score">Skor: 0</div>
+        </div>
+        <div id="leaderboard-container" class="container">
+            <h2>Papan Skor 10 Besar</h2>
+            <ol id="leaderboard-list"></ol>
+            <button onclick="goHome()">Kembali ke Menu</button>
+        </div>
+        <div id="multiplayer-container" class="container">
+            <h2>Mode Multiplayer</h2>
+            <p>Mohon tunggu pembaruan dari kami.</p>
+            <button onclick="goHome()">Kembali ke Menu</button>
+        </div>
+        <script>
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let leaderboard = [];
+            const soal_teka_teki = [
+                ["Aku selalu datang tetapi tidak pernah sekarang.", "besok", "Waktunya belum tiba."],
+                ["Apa yang memiliki banyak gigi tetapi tidak bisa menggigit?", "sisir", "Biasa dipakai di rambut."],
+                ["Apa yang bisa basah walaupun tugasnya mengeringkan?", "handuk", "Biasa dipakai setelah mandi."],
+                ["Apa yang naik tapi tidak pernah turun?", "umur", "Meningkat seiring waktu."],
+                ["Benda apa yang kalau dipukul malah enak?", "gendang", "Sering digunakan dalam musik."],
+                ["Apa yang punya kaki tapi tidak bisa berjalan?", "meja", "Benda yang biasa dipakai di rumah."],
+                ["Aku memiliki kota tetapi tidak ada rumah, sungai tetapi tidak ada air. Apa aku?", "peta", "Alat untuk menunjukkan arah."],
+                ["Apa yang punya tangan tapi tidak bisa memegang?", "jam", "Benda yang menunjukkan waktu."],
+                ["Apa yang bisa dilihat tetapi tidak bisa disentuh?", "bayangan", "Terjadi karena cahaya."],
+                ["Siapakah yang selalu bersama kita, namun tidak pernah terlihat?", "waktu", "Selalu berjalan."],
+                ["Benda apa yang lebih ringan dari udara?", "awan", "Dapat terbang di langit."],
+                ["Apa yang ada di awal dan di akhir minggu?", "huruf 'm'", "Perhatikan huruf pertama dan terakhir."],
+                ["Aku memiliki banyak tombol tetapi tidak bisa menekan apa-apa. Siapakah aku?", "keyboard", "Benda yang sering dipakai saat bekerja."],
+                ["Apa yang jika diberi makan malah menjadi besar, tetapi jika diberi minum malah kecil?", "api", "Dapat menghanguskan benda."],
+                ["Apa yang selalu ada di dapur, tapi tidak bisa dimakan?", "kompor", "Benda untuk memasak."],
+                ["Apa yang bisa dipakai namun tidak bisa dilihat?", "baju", "Kamu mengenakannya setiap hari."],
+                ["Jika kamu membelah aku, aku tidak akan tersentuh. Siapakah aku?", "bayangan", "Hanya ada saat ada cahaya."],
+                ["Apa yang memiliki kaki tetapi tidak pernah bergerak?", "kursi", "Benda yang digunakan"],
+                ["Aku adalah sesuatu yang sering digunakan, aku bisa masuk dalam tas dan kantong. Aku kecil dan berguna. Apa aku?", "pulpen", "Sering digunakan untuk menulis."],
+                ["Benda apa yang bisa dipegang tapi tidak bisa disentuh?", "suar", "Dapat terdengar tapi tidak dapat terlihat."],
+                ["Apa yang selalu di atas kepala kita, tetapi tidak pernah terasa berat?", "topi", "Dipakai di kepala."],
+                ["Siapakah yang bisa membuatmu marah, tetapi tidak bisa menyentuhmu?", "kata-kata", "Dapat menyentuh hati."],
+                ["Aku bisa menghilang saat kamu mencari aku, tetapi aku selalu ada saat kamu tidak mencariku. Siapakah aku?", "bayangan", "Selalu mengikuti kamu."],
+                ["Apa yang lebih tua dari aku, namun tidak pernah tampak tua?", "waktu", "Selalu berjalan meskipun tak terlihat."],
+                ["Apa yang memiliki banyak warna tetapi hanya dapat terlihat ketika terkena cahaya?", "pelangi", "Tampil setelah hujan."],
+                ["Benda apa yang tidak bisa dilihat, tapi ada di setiap tempat?", "udara", "Dapat dirasakan tapi tidak terlihat."],
+                ["Apa yang selalu memberikan kegelapan dan terbuat dari bahan keras?", "kaca gelap", "Digunakan untuk melindungi dari matahari."],
+                ["Aku memiliki lubang kecil di tubuhku, namun tetap bisa membuat banyak suara. Apa aku?", "flute", "Alat musik tiup."],
+                ["Aku bisa dibuka, tetapi tidak pernah ditutup. Apa aku?", "buku", "Berisi cerita atau informasi."],
+                ["Apa yang selalu ada di jalan, namun tidak pernah bergerak?", "garis jalan", "Dapat terlihat di sepanjang jalan."],
+                ["Aku selalu datang, tetapi tidak pernah ada di masa lalu. Apa aku?", "hari esok", "Selalu ada di depan kita."],
+                ["Apa yang memiliki dua sisi, tetapi tidak dapat dilihat?", "mata uang", "Memiliki sisi depan dan belakang."],
+                ["Aku bisa terbang tanpa sayap. Siapakah aku?", "waktu", "Selalu berjalan."],
+                ["Apa yang bisa dimiliki banyak orang, tetapi hanya satu yang dapat menggunakannya?", "kunci", "Digunakan untuk membuka sesuatu."],
+                ["Apa yang lebih cepat dari waktu, tetapi tidak bisa terlihat?", "pikiran", "Bergerak lebih cepat dari apa pun."],
+                ["Aku bisa jadi tinggi dan rendah, tapi tidak bisa dilihat atau disentuh. Apa aku?", "suara", "Dapat didengar tapi tak bisa disentuh."]
+            ];function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            shuffleQuestions();
+            document.getElementById("home-container").style.display = "none";
+            document.getElementById("game-container").style.display = "flex";
+            document.getElementById("answer").value = "";
+            document.getElementById("result").innerText = "";
+            document.getElementById("score").innerText = "Skor: 0";
+            showQuestion();
+        }
+        
+        function shuffleQuestions() {
+            for (let i = soal_teka_teki.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [soal_teka_teki[i], soal_teka_teki[j]] = [soal_teka_teki[j], soal_teka_teki[i]];
+            }
+        }
+        
+        function showQuestion() {
+            document.getElementById("answer").value = "";
+            document.getElementById("question").innerText = soal_teka_teki[currentQuestionIndex][0];
+        }
+        
+        function checkAnswer() {
+            const answer = document.getElementById("answer").value.trim().toLowerCase();
+            if (answer === soal_teka_teki[currentQuestionIndex][1].toLowerCase()) {
+                score++;
+                document.getElementById("result").innerText = "Jawaban benar!";
+            } else {
+                document.getElementById("result").innerText = "Jawaban salah!";
+            }
+            document.getElementById("score").innerText = "Skor: " + score;
+            currentQuestionIndex++;
+            if (currentQuestionIndex < soal_teka_teki.length) {
+                showQuestion();
+            } else {
+                endGame();
+            }
+        }
+        
+        function showClue() {
+            alert(soal_teka_teki[currentQuestionIndex][2]);
+        }
+        
+        function skipQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < soal_teka_teki.length) {
+                showQuestion();
+            } else {
+                endGame();
+            }
+        }
+        
+        function endGame() {
+            const name = prompt("Permainan selesai! Skor akhir: " + score + "\nMasukkan nama Anda untuk leaderboard:");
+            if (name) {
+                leaderboard.push({ name, score });
+                leaderboard.sort((a, b) => b.score - a.score);
+                leaderboard = leaderboard.slice(0, 10);
+            }
+            updateLeaderboard();
+            goHome();
+        }
+        
+        function updateLeaderboard() {
+            const list = document.getElementById("leaderboard-list");
+            list.innerHTML = "";
+            leaderboard.forEach(entry => {
+                const li = document.createElement("li");
+                li.textContent = `${entry.name}: ${entry.score}`;
+                list.appendChild(li);
+            });
+        }
+        
+        function viewLeaderboard() {
+            document.getElementById("home-container").style.display = "none";
+            document.getElementById("leaderboard-container").style.display = "flex";
+        }
+        
+        function startMultiplayer() {
+            document.getElementById("home-container").style.display = "none";
+            document.getElementById("multiplayer-container").style.display = "flex";
+        }
+        
+        function goHome() {
+            document.getElementById("home-container").style.display = "flex";
+            document.getElementById("game-container").style.display = "none";
+            document.getElementById("multiplayer-container").style.display = "none";
+            document.getElementById("leaderboard-container").style.display = "none";
+        }
+        
+        </script>
+        </body>
+        </html><!DOCTYPE html><html lang="id">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Permainan Teka-Teki</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    background: linear-gradient(to right, #2c3e50, #3498db);
+                    color: #fff;
+                }
+                .container {
+                    display: none;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    padding: 20px;
+                    text-align: center;
+                }
+                #home-container {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                }
+                button {
+                    margin: 10px;
+                    padding: 10px 20px;
+                    font-size: 18px;
+                    background-color: #2980b9;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                }
+                button:hover {
+                    background-color: #1abc9c;
+                }
+                input[type="text"] {
+                    padding: 8px;
+                    font-size: 16px;
+                    border-radius: 5px;
+                    border: none;
+                    margin: 10px;
+                }
+                #question {
+                    font-size: 24px;
+                    margin-bottom: 20px;
+                }
+                .actions {
+                    margin-top: 20px;
+                }
+            </style>
+        </head>
+        <body>
+        <div id="home-container">
+            <h1>Selamat Datang di Permainan Teka-Teki</h1>
+            <button onclick="startGame()">Mulai Permainan</button>
+            <button onclick="viewLeaderboard()">Leaderboard</button>
+            <button onclick="startMultiplayer()">Multiplayer</button>
+        </div>
+        <div id="game-container" class="container">
+            <div id="question"></div>
+            <input type="text" id="answer" placeholder="Jawaban Anda">
+            <div class="actions">
+                <button onclick="checkAnswer()">Jawab</button>
+                <button onclick="showClue()">Clue</button>
+                <button onclick="skipQuestion()">Lewati</button>
+                <button onclick="endGame()">Menyerah</button>
+            </div>
+            <div id="result"></div>
+            <div id="score">Skor: 0</div>
+        </div>
+        <div id="leaderboard-container" class="container">
+            <h2>Papan Skor 10 Besar</h2>
+            <ol id="leaderboard-list"></ol>
+            <button onclick="goHome()">Kembali ke Menu</button>
+        </div>
+        <div id="multiplayer-container" class="container">
+            <h2>Mode Multiplayer</h2>
+            <p>Mohon tunggu pembaruan dari kami.</p>
+            <button onclick="goHome()">Kembali ke Menu</button>
+        </div>
+        <script>
+            let currentQuestionIndex = 0;
+            let score = 0;
+            let leaderboard = [];
+            const soal_teka_teki = [
+                ["Aku selalu datang tetapi tidak pernah sekarang.", "besok", "Waktunya belum tiba."],
+                ["Apa yang memiliki banyak gigi tetapi tidak bisa menggigit?", "sisir", "Biasa dipakai di rambut."],
+                ["Apa yang bisa basah walaupun tugasnya mengeringkan?", "handuk", "Biasa dipakai setelah mandi."],
+                ["Apa yang naik tapi tidak pernah turun?", "umur", "Meningkat seiring waktu."],
+                ["Benda apa yang kalau dipukul malah enak?", "gendang", "Sering digunakan dalam musik."],
+                ["Apa yang punya kaki tapi tidak bisa berjalan?", "meja", "Benda yang biasa dipakai di rumah."],
+                ["Aku memiliki kota tetapi tidak ada rumah, sungai tetapi tidak ada air. Apa aku?", "peta", "Alat untuk menunjukkan arah."],
+                ["Apa yang punya tangan tapi tidak bisa memegang?", "jam", "Benda yang menunjukkan waktu."],
+                ["Apa yang bisa dilihat tetapi tidak bisa disentuh?", "bayangan", "Terjadi karena cahaya."],
+                ["Siapakah yang selalu bersama kita, namun tidak pernah terlihat?", "waktu", "Selalu berjalan."],
+                ["Benda apa yang lebih ringan dari udara?", "awan", "Dapat terbang di langit."],
+                ["Apa yang ada di awal dan di akhir minggu?", "huruf 'm'", "Perhatikan huruf pertama dan terakhir."],
+                ["Aku memiliki banyak tombol tetapi tidak bisa menekan apa-apa. Siapakah aku?", "keyboard", "Benda yang sering dipakai saat bekerja."],
+                ["Apa yang jika diberi makan malah menjadi besar, tetapi jika diberi minum malah kecil?", "api", "Dapat menghanguskan benda."],
+                ["Apa yang selalu ada di dapur, tapi tidak bisa dimakan?", "kompor", "Benda untuk memasak."],
+                ["Apa yang bisa dipakai namun tidak bisa dilihat?", "baju", "Kamu mengenakannya setiap hari."],
+                ["Jika kamu membelah aku, aku tidak akan tersentuh. Siapakah aku?", "bayangan", "Hanya ada saat ada cahaya."],
+                ["Apa yang memiliki kaki tetapi tidak pernah bergerak?", "kursi", "Benda yang digunakan"],
+                ["Aku adalah sesuatu yang sering digunakan, aku bisa masuk dalam tas dan kantong. Aku kecil dan berguna. Apa aku?", "pulpen", "Sering digunakan untuk menulis."],
+                ["Benda apa yang bisa dipegang tapi tidak bisa disentuh?", "suar", "Dapat terdengar tapi tidak dapat terlihat."],
+                ["Apa yang selalu di atas kepala kita, tetapi tidak pernah terasa berat?", "topi", "Dipakai di kepala."],
+                ["Siapakah yang bisa membuatmu marah, tetapi tidak bisa menyentuhmu?", "kata-kata", "Dapat menyentuh hati."],
+                ["Aku bisa menghilang saat kamu mencari aku, tetapi aku selalu ada saat kamu tidak mencariku. Siapakah aku?", "bayangan", "Selalu mengikuti kamu."],
+                ["Apa yang lebih tua dari aku, namun tidak pernah tampak tua?", "waktu", "Selalu berjalan meskipun tak terlihat."],
+                ["Apa yang memiliki banyak warna tetapi hanya dapat terlihat ketika terkena cahaya?", "pelangi", "Tampil setelah hujan."],
+                ["Benda apa yang tidak bisa dilihat, tapi ada di setiap tempat?", "udara", "Dapat dirasakan tapi tidak terlihat."],
+                ["Apa yang selalu memberikan kegelapan dan terbuat dari bahan keras?", "kaca gelap", "Digunakan untuk melindungi dari matahari."],
+                ["Aku memiliki lubang kecil di tubuhku, namun tetap bisa membuat banyak suara. Apa aku?", "flute", "Alat musik tiup."],
+                ["Aku bisa dibuka, tetapi tidak pernah ditutup. Apa aku?", "buku", "Berisi cerita atau informasi."],
+                ["Apa yang selalu ada di jalan, namun tidak pernah bergerak?", "garis jalan", "Dapat terlihat di sepanjang jalan."],
+                ["Aku selalu datang, tetapi tidak pernah ada di masa lalu. Apa aku?", "hari esok", "Selalu ada di depan kita."],
+                ["Apa yang memiliki dua sisi, tetapi tidak dapat dilihat?", "mata uang", "Memiliki sisi depan dan belakang."],
+                ["Aku bisa terbang tanpa sayap. Siapakah aku?", "waktu", "Selalu berjalan."],
+                ["Apa yang bisa dimiliki banyak orang, tetapi hanya satu yang dapat menggunakannya?", "kunci", "Digunakan untuk membuka sesuatu."],
+                ["Apa yang lebih cepat dari waktu, tetapi tidak bisa terlihat?", "pikiran", "Bergerak lebih cepat dari apa pun."],
+                ["Aku bisa jadi tinggi dan rendah, tapi tidak bisa dilihat atau disentuh. Apa aku?", "suara", "Dapat didengar tapi tak bisa disentuh."]
+            ];function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            shuffleQuestions();
+            document.getElementById("home-container").style.display = "none";
+            document.getElementById("game-container").style.display = "flex";
+            document.getElementById("answer").value = "";
+            document.getElementById("result").innerText = "";
+            document.getElementById("score").innerText = "Skor: 0";
+            showQuestion();
+        }
+        
+        function shuffleQuestions() {
+            for (let i = soal_teka_teki.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [soal_teka_teki[i], soal_teka_teki[j]] = [soal_teka_teki[j], soal_teka_teki[i]];
+            }
+        }
+        
+        function showQuestion() {
+            document.getElementById("answer").value = "";
+            document.getElementById("question").innerText = soal_teka_teki[currentQuestionIndex][0];
+        }
+        
+        function checkAnswer() {
+            const answer = document.getElementById("answer").value.trim().toLowerCase();
+            if (answer === soal_teka_teki[currentQuestionIndex][1].toLowerCase()) {
+                score++;
+                document.getElementById("result").innerText = "Jawaban benar!";
+            } else {
+                document.getElementById("result").innerText = "Jawaban salah!";
+            }
+            document.getElementById("score").innerText = "Skor: " + score;
+            currentQuestionIndex++;
+            if (currentQuestionIndex < soal_teka_teki.length) {
+                showQuestion();
+            } else {
+                endGame();
+            }
+        }
+        
+        function showClue() {
+            alert(soal_teka_teki[currentQuestionIndex][2]);
+        }
+        
+        function skipQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < soal_teka_teki.length) {
+                showQuestion();
+            } else {
+                endGame();
+            }
+        }
+        
+        function endGame() {
+            const name = prompt("Permainan selesai! Skor akhir: " + score + "\nMasukkan nama Anda untuk leaderboard:");
+            if (name) {
+                leaderboard.push({ name, score });
+                leaderboard.sort((a, b) => b.score - a.score);
+                leaderboard = leaderboard.slice(0, 10);
+            }
+            updateLeaderboard();
+            goHome();
+        }
+        
+        function updateLeaderboard() {
+            const list = document.getElementById("leaderboard-list");
+            list.innerHTML = "";
+            leaderboard.forEach(entry => {
+                const li = document.createElement("li");
+                li.textContent = `${entry.name}: ${entry.score}`;
+                list.appendChild(li);
+            });
+        }
+        
+        function viewLeaderboard() {
+            document.getElementById("home-container").style.display = "none";
+            document.getElementById("leaderboard-container").style.display = "flex";
+        }
+        
+        function startMultiplayer() {
+            document.getElementById("home-container").style.display = "none";
+            document.getElementById("multiplayer-container").style.display = "flex";
+        }
+        
+        function goHome() {
+            document.getElementById("home-container").style.display = "flex";
+            document.getElementById("game-container").style.display = "none";
+            document.getElementById("multiplayer-container").style.display = "none";
+            document.getElementById("leaderboard-container").style.display = "none";
+        }
+        
+        </script>
+        </body>
+        </html>
